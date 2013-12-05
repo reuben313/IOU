@@ -1,0 +1,49 @@
+-- | By default this file is used in Model.hs (which is imported by Foundation.hs)
+
+-- * Entitites used for authentication (MODIFY AT YOUR OWN RISK)
+User
+    ident Text
+    password Text Maybe
+    UniqueUser ident
+    deriving Typeable
+    deriving Show
+    
+Email
+    email Text
+    user UserId Maybe
+    verkey Text Maybe
+    UniqueEmail email
+
+-- * Your entities go here
+
+-- An entity modeling receipts
+Receipt
+    receiptIdent Text
+    recieptUserId UserId 
+    timestamp UTCTime
+    total_amount  Double
+    deriving Show 
+ 
+    
+-- An entity that models the many-to-many relation between Receipts and Users
+ReceiptUser                     
+    receipt_userIdent Text
+    receipt_Id ReceiptId 
+    debtorId UserId 
+    amount  Double
+    status  Text
+    deriving Show
+   
+
+-- An entity modeling payments
+Payment
+    paymentIdent Text
+    timestamp UTCTime default=CURRENT_TIME
+    from UserId 
+    to UserId  
+    receiptuserline ReceiptUserId
+    deriving Show
+
+TestAs
+ bla Text
+

@@ -1,0 +1,15 @@
+cabalImplementations/1/executable=C\:/Program Files (x86)/Haskell Platform/2013.2.0.0/lib/extralibs/bin/cabal.exe
+cabalImplementations/1/installVersion=1.16.0.2
+cabalImplementations/1/libraryVersion=1.16.0
+cabalImplementations/1/name=cabal-1.16.0.2
+cabalImplementations/2/executable=C\:/Users/Reuben/AppData/Roaming/cabal/bin/cabal.exe
+cabalImplementations/2/installVersion=1.18.0.2
+cabalImplementations/2/libraryVersion=1.18.1.1
+cabalImplementations/2/name=cabal-1.18.0.2
+cabalImplementations/3/executable=C\:/Users/Reuben/Application Data/cabal/bin/cabal.exe
+cabalImplementations/3/installVersion=1.18.0.2
+cabalImplementations/3/libraryVersion=1.18.1.1
+cabalImplementations/3/name=cabal-1.18.0.2-1
+cabalImplementations/defaultImpl=cabal-1.16.0.2
+cabalImplementations/numImpls=3
+eclipse.preferences.version=1
