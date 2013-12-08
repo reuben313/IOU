@@ -17,7 +17,7 @@ form fromm too recLine  = renderDivs $ PaymentDTO
                               <*> pure fromm
                               <*> pure too
                               <*> pure recLine
-                              <*> lift (liftIO getCurrentTime)
+                              <*> lift (liftIO getCurrentTime)   
                               
                               
                                

@@ -2,7 +2,6 @@
 module Handler.Payment where
 
 import Import
-import Data.List (head)
 import Data.Maybe
 import Util
 import Data.Text (unpack,toLower)
@@ -71,17 +70,7 @@ postPaymentsR =do error "wil not use"
 
 
 
-
-getTotalvalueOfReceipt:: [Entity ReceiptUser] -> Maybe Double
-getTotalvalueOfReceipt
-  = foldr
-      (\ a b ->
-         if isNothing  b then Nothing else
-           do x <- b
-              let y = receiptUserAmount $ entityVal a
-              return (x + y))
-      (Just 0.0)
-                            
+          
                                  
                                                             
                                                           
@@ -90,35 +79,41 @@ getTotalvalueOfReceipt
                                     
 getPayPaymentsR:: ReceiptUserId-> Handler Html
 getPayPaymentsR id  = do  userid<- lookupSession "_ID"
-                       
+                          let userKey = convertToTextKey' userid 
+                          let userKey' =   Key{unKey = userKey}
                          
-                          userReceipt<- runDB $ selectFirst [ReceiptUserId ==. id] []
-                          let isval =  entityVal $ fromJust userReceipt
-                          let uR =receiptUserReceipt_Id $  entityVal $ fromJust userReceipt
-                          receipt <-    runDB $ selectFirst [ReceiptId ==. uR] [] 
-                          let rec = receiptRecieptUserId $  entityVal $ fromJust receipt
-                          let debtorId=receiptUserDebtorId $  entityVal $ fromJust userReceipt
-                          let bla = case ( unpack (toLower $ receiptUserStatus isval) ) of "unpaid" -> Nothing
-                                                                                           "paid"  ->  Just True
-                                  
-                          (res, enctypee)  <- generateFormPost  (form' rec debtorId id) 
-                          defaultLayout
-                              [whamlet|
-                                           
-                                            <table border="1">
-                                             
-                                              <tr>
-                                                $maybe _ <- bla
-                                                    <p>THIS TRANSACTION HAS ALREADY TOOK PLACE  
-                                                     
-                                                $nothing
-                                                    <form method=post action=@{PayPaymentsR id} enctype=#{enctypee}>
-                                                       ^{res}
-                                                         <button>Pay  
-                                                       
-                                                    
-                                                      
-                                                      |]                                 
+                          userReceipt<- runDB $ selectFirst [ReceiptUserId ==. id,ReceiptUserDebtorId==.userKey'] []
+                          case userReceipt of Nothing           -> redirect HomeR
+                                              Just (Entity x y) -> do let isval =  entityVal $ fromJust userReceipt
+                                                                      let uR =receiptUserReceipt_Id $  entityVal $ fromJust userReceipt
+                                                                      receipt <-    runDB $ selectFirst [ReceiptId ==. uR] [] 
+                                                                      let rec = receiptRecieptUserId $  entityVal $ fromJust receipt
+                                                                      let debtorId=receiptUserDebtorId $  entityVal $ fromJust userReceipt
+                                                                      let bla = case ( unpack (toLower $ receiptUserStatus isval) ) of "unpaid" -> Nothing
+                                                                                                                                       "paid"  ->  Just True
+                                                                          
+                                                                      (res, enctypee)  <- generateFormPost  (form' rec debtorId id) 
+                                                                      defaultLayout
+                                                                        [whamlet|
+                                                                                   
+                                                                                    <table border="1">
+                                                                                     
+                                                                                      <tr>
+                                                                                        $maybe _ <- bla
+                                                                                            <p>THIS TRANSACTION HAS ALREADY TOOK PLACE  
+                                                                                             
+                                                                                        $nothing
+                                                                                              
+                                                                                               
+                                                                                            <form method=post action=@{PayPaymentsR id} enctype=#{enctypee}>
+                                                                                               ^{res}
+                                                                                                 <button>Pay
+                                                                                              
+                                                                                              |] 
+                         
+                                              
+                          
+                                                          
                                                            
                        
                                                   
@@ -134,23 +129,21 @@ postPayPaymentsR id=do       userid <- lookupSession "_ID"
                              let debtorId=receiptUserDebtorId $  entityVal $ fromJust userReceipt
                              let receiptide =  receiptUserReceipt_Id $  entityVal $ fromJust userReceipt
                              ((res, widget), enctypee) <- runFormPost  (form' rec debtorId id ) 
-                             let content = case res of FormSuccess a -> Just a 
-                                                       FormFailure t -> Nothing
-                                                       FormMissing ->   Nothing 
-                             paymentId<- runDB $ insert (fromJust content)
+                             case res of FormSuccess a -> do runDB $ insert a
+                                                             runDB $ update id [ReceiptUserStatus=."paid"]
+                                                             redirect HomeR
+                                         FormFailure t ->    redirect HomeR
+                                         FormMissing   ->    redirect HomeR
+                            
+                             
                                     
-                             defaultLayout
-                                      [whamlet|
-                                              <p>#{show rec}
-                                               <p>#{show debtorId}
-                                              
-                                               <p>Previous result: #{show content}     
+                               
                                                     
                                                               
                                                                
                                                             
                                                               
-                                                              |]                                                                  
+                                                                                                                             
 
 
     

@@ -1,0 +1,1 @@
+function processAmount(){alert("ha ha ")}

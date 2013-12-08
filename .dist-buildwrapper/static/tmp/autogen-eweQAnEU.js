@@ -1,0 +1,2 @@
+function processAmount(){var x=document.getElementById("receiptfield"),y=document.getElementById("receipType");if(y.value==2){x.value=0.00;x.disabled=true}else x.disabled=false}
+function submitForm(){var form=document.getElementById("receiptForm"),x=document.getElementById("receiptfield");x.disabled=false;form.submit()}

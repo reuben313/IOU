@@ -57,8 +57,8 @@ getUserR userId =do  person         <- runDB $ get404 userId
                                              <th> Status
                                               <tr>
                                                $forall Entity rId receipt <- receipts
-                                                <td> {# ReceiptReceiptIdent receipts} 
-                                                <td> {# ReceiptTotal_amount receipts}
+                                                <td> {# ReceiptReceiptIdent receipt} 
+                                                <td> {# ReceiptTotal_amount receipt}
                                                 <td> {# Rec}
                                             
                                             <ul>

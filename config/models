@@ -22,6 +22,7 @@ Receipt
     recieptUserId UserId 
     timestamp UTCTime
     total_amount  Double
+    receiptType Text
     deriving Show 
  
     

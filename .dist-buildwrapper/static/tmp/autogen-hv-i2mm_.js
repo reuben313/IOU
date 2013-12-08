@@ -1,0 +1,1 @@
+function processAmount(){var x=document.getElementById("receiptfield"),y=document.getElementById("receipType");if(y.value==1){y.value=0.0}else ;;alert(y.value)}

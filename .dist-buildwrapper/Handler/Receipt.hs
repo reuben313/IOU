@@ -12,47 +12,31 @@ import Handler.HandlerHelpers.ReceiptHelper
 import Handler.HandlerHelpers.PaymentHelper
 
 
-receiptForm :: Form Receipt
-receiptForm = renderDivs $ error "receiptForm not implemented yet!"
 
-{-
-receiptUserForm :: ReceiptId -> Form ReceiptUser
-receiptUserForm receiptId = renderDivs $ ReceiptUser
-                            <$> areq textField "Title" Nothing
-                            <*> pure receiptId
-                            <*> areq textField "Contents" Nothing
-                            <*> users
-                            <*> areq doubleField "Title" Nothing
-                            <*> areq textField "Title" Nothing
-                            
-                            
- 
-                            where
-                                -- Retrieve a list of users from the database that we can use
-                                -- to populate a list selection box.
-                                users = do
-                                    entities <- runDB (selectList [] [Asc UserIdent])
-                                    optionsPairs $ map (\user -> ( userIdent $ entityVal user
-                                                                 , entityKey user             )) entities
- -}
+
  
 
 -- List all receipts
 getAllReceiptsR :: Handler Html
 getAllReceiptsR = do
                   userId<-  lookupSession "_ID"
-                  (widget, enctype) <- generateFormPost personForm
+                  let userKey = convertToTextKey' userId 
+                  let userKey' =   Key{unKey = userKey}
+                  (widget, enctype) <- generateFormPost (receiptForm userKey')
                 
                   rep   <- runDB (selectList [] [Desc ReceiptTimestamp])
                   
                   
                   defaultLayout
+                  
                                         [whamlet|
+                                          
+                    
                                            <h1>    
                                               $maybe _ <- userId
-                                                <form method=post action=@{AllReceiptsR} enctype=#{enctype}>
+                                                <form id="receiptForm" method=post action=@{AllReceiptsR} enctype=#{enctype}>
                                                   ^{widget}
-                                                   <button>Create an Receipt
+                                               <button onclick="submitForm()">Create an Receipt    
                                               $nothing
                                                
                                                
@@ -86,19 +70,28 @@ getAllReceiptsR = do
                                                                                                              |]
  
 postAllReceiptsR :: Handler Html
-postAllReceiptsR = do     time <- liftIO getCurrentTime
+postAllReceiptsR = do     
                           userid<- lookupSession "_ID"
-                          ((result, widget), enctype) <- runFormPost personForm
-                        
                           let userKey = convertToTextKey' userid 
                           let userKey' =   Key{unKey = userKey}
-                          let content = case result of FormSuccess a -> a
-                          receiptIde <- runDB $ insert $ Receipt (name content) userKey'   time 0.0 
+                          ((result, widget), enctype) <- runFormPost (receiptForm userKey')
+                          
+                         
+                          case result of FormSuccess a    -> do receiptIde <- runDB $ insert a
+                                                                redirect (ReceiptR receiptIde)
+                                                             
+                                         FormMissing      ->  redirect HomeR 
+                                         FormFailure tx   ->  redirect AllReceiptsR
+                          
+                           
+                                                                                                    
+                                                    
+                         
                                                                            
                         
                           
                           
-                         
+            
                           
                         
                           
@@ -110,27 +103,21 @@ postAllReceiptsR = do     time <- liftIO getCurrentTime
    
     
     
-                          defaultLayout
-                                
-                               [whamlet|
-                                                                         
-                                        $maybe _ <- userid
-                                            
-                                            
-                                             <a href=/1>Go to the login page 
-                                                
-                                        $nothing
-                                            <p>
-                                                <a href=@{AuthR LoginR}>Go to the login page |]
+                          
 
 -- Display a receipt
 getReceiptR :: ReceiptId -> Handler Html
 getReceiptR receiptId = do  userId<-  lookupSession "_ID"
                             let userKey = convertToTextKey' userId
+                            let userKey' =   Key{unKey = userKey}
                             vb<- runDB $ selectFirst [ReceiptId ==. receiptId ] []
+                            let isEven = case vb of Just (Entity x y) -> case (receiptReceiptType y) of "even"     -> True 
+                                                                                                        "not even" -> False
+                                                    _                 -> False
                             debtors <- runDB $ selectList [ReceiptUserReceipt_Id ==. receiptId ] []
                             userInfo<- runDB $ selectFirst[UserId==.   (Key{unKey=userKey})] []
-                            (widget, enctype) <- generateFormPost receiptuserForm
+                            let userInfo' = userIdent $ entityVal $ fromJust userInfo 
+                            (widget, enctype) <- generateFormPost (receiptuserForm receiptId  isEven )
                             let x= vb
                             let y = entityVal (fromJust x)
                             let userIde = receiptRecieptUserId y
@@ -145,7 +132,7 @@ getReceiptR receiptId = do  userId<-  lookupSession "_ID"
                            
                             let chek = if toString userKey ==  toString (unKey  userIde ) then Just True else Nothing 
                             let chek' =if isPartOfReciept debtors userId then Just True else Nothing
-                            
+                            let chek''' x =  toString userKey ==  toString (unKey  x ) 
                             
                          
                             defaultLayout
@@ -154,7 +141,7 @@ getReceiptR receiptId = do  userId<-  lookupSession "_ID"
                                                 $forall Entity receiptUserid receiptUser <- userInfo  
                                                  <table border="1">
                                                   <tr>
-                                                    <td>Is created by #{userIdent receiptUser}
+                                                    <td>Is created by #{ userInfo'}
                                                     <td>
                                                  $maybe _ <- chek  
                                                     $forall Entity receiptUserid receiptUser <- vb 
@@ -183,9 +170,12 @@ getReceiptR receiptId = do  userId<-  lookupSession "_ID"
                                                                       #{receiptUserStatus receiptUser} 
                                                                  
                                                                    <td> 
-                                                                         $maybe _ <- chek'
-                                                                          <a href=@{PayPaymentsR receiptUserid}>pay my Bill 
-                                                                         $nothing     
+                                                                         $if chek''' (receiptUserDebtorId receiptUser)
+                                                                           <a href=@{PayPaymentsR receiptUserid}>pay my Bill
+                                                                         $else
+                                                                       
+                                                                          
+                                                                          
                                                         
                                                                           
                                                   |]
@@ -194,24 +184,65 @@ getReceiptR receiptId = do  userId<-  lookupSession "_ID"
                                                                   
                                                                      
                                                                      
-                                                    
-                                                      
+           
+                                                                        {- $maybe _ <- chek'
+                                                                          <a href=@{PayPaymentsR receiptUserid}>pay my Bill 
+                                                                         $nothing                                               
+                                                      -}
                                                        
 
 postReceiptR :: ReceiptId -> Handler Html
-postReceiptR receiptId = do  ((result, widget), enctype) <- runFormPost receiptuserForm 
-                             let content = case result of FormSuccess a -> a
-                             user <- runDB $ selectFirst[UserIdent ==. billedTo content] []
-                             let x = user
-                             let key  = entityKey (fromJust x)
+postReceiptR receiptId = do   
+                            
+                            -- user <- runDB $ selectFirst[UserIdent ==. debtorId content] []
+                           --  let x = user
+                          --   let key  = entityKey (fromJust x)
                              userid<- lookupSession "_ID"
                              let userKey = convertToTextKey' userid
-                             receptId <-case user of Just a -> (runDB $ insert $ ReceiptUser (  receipt_userIdent content ) receiptId  key (amount content) "unpaid") 
-                             upd<-runDB $  update receiptId [ReceiptTotal_amount +=. (amount content)]
-                             defaultLayout
-                                
-                               [whamlet|
-                                       
-                                         <a href=@{AllReceiptsR}>Back to Receipt                                 
-                                        
-                                         |]
+                             let userKey' =   Key{unKey = userKey}
+                             resceipt' <- runDB $ get404 receiptId
+                             receiptsusers' <- runDB $ selectList [ReceiptUserReceipt_Id==. receiptId ][]
+                             let isEven = case resceipt' of    y -> case (receiptReceiptType y) of "even"     -> True 
+                                                                                                   "not even" -> False
+                                                               _                  -> False
+                             ((result, widget), enctype) <- runFormPost (receiptuserForm receiptId isEven) 
+                             let result' = case result of FormSuccess a -> Just a
+                                                          FormFailure t -> Nothing
+                                                          FormMissing   -> Nothing 
+                            
+                             case result' of Nothing -> do  redirect HomeR
+                                             Just fs -> case (receiptReceiptType resceipt') of "not even" ->  do  runDB $ insert  fs
+                                                                                                                  runDB $ update receiptId [ReceiptTotal_amount +=. (receiptUserAmount fs)]
+                                                                                                                  redirect (ReceiptR receiptId)
+                                                                                                                  
+                                                                                               "even"    ->  do  rsId <-runDB $ insert  fs
+                                                                                                                 let updatevalues' =  batchUpdateValues receiptsusers' (receiptTotal_amount resceipt' )  
+                                                                                                                 case rsId of x' -> do  runDB $ updateWhere [ReceiptUserReceipt_Id==. receiptId] [ReceiptUserAmount=.  updatevalues']
+                                                                                                                              _  -> redirect (ReceiptR receiptId)  
+                                                                                                                 --runDB $ updateWhere [ReceiptUserReceipt_Id==. receiptId] [ReceiptUserAmount=.  updatevalues']
+                                                                                                                 redirect (ReceiptR receiptId)      
+                                             
+                                             
+                                             
+                                            
+                                                                    
+                             
+                                     
+                             
+                                                           
+
+batchUpdateValues::[Entity ReceiptUser]-> Double ->Double
+batchUpdateValues users totalAmount =devide
+                                   
+                                    where devide     = splitEvenly (length  users)  totalAmount  
+                                          
+                                               
+
+
+
+                            
+splitEvenly:: Int  -> Double -> Double
+splitEvenly factor totalvalue = (totalvalue /fromIntegral (factor+1)   )::Double
+
+                                                      
+                          

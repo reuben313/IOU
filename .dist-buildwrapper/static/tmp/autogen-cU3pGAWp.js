@@ -1,0 +1,1 @@
+function processAmount(){var x=document.getElementById("receiptfield");alert(x.value)}
