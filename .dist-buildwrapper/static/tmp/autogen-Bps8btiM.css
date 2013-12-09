@@ -1,0 +1,15 @@
+h1 {
+    color: green
+;
+}
+#navbar {
+    background-color: blue;
+    width: 200px;
+}
+#navbar li {
+    display: inline;
+    border-color: green;
+}
+a {
+    color: black;
+}

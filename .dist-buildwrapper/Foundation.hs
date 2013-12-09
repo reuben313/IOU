@@ -198,8 +198,11 @@ page  = do
                     <table>
                       <tr>
                        <td><a href=@{HomeR}> Home
+                       <td> <a href=@{AllUsersR}>ALL USERS
+                       <td><a href=@{AllReceiptsR}>RECEIPTS
+                        <td><a href=@{PaymentsR}> PAYMENTS
+                       
                        <td><a href=@{AuthR LoginR}>Go to the login page |]
-                     
                    
                
                

@@ -31,4 +31,41 @@ isPartOfReciept em (Just t) = length list > 0
 
 toString:: PersistValue->String  
 toString (PersistText  t)= show t    
-toString (PersistInt64 t')= "\""++(show t')++ "\""                                                        
+toString (PersistInt64 t')= "\""++(show t')++ "\""   
+
+
+
+
+getAllPayements:: Handler [((Entity Payment, Entity User, Entity User), (Entity Payment, Entity ReceiptUser))]
+getAllPayements=do records <- runDB $ do
+                                         payments <- selectList [] [Desc PaymentTimestamp]
+                                         users    <- selectList [] []
+                                         return $ joinTables3 paymentFrom paymentTo payments users users
+
+                 
+                   let payments'=  map (\(x,_,_)-> x ) records
+                   paAndRecords <- runDB $ do  p    <- selectList [] []
+                                               return $ joinTables paymentReceiptuserline  payments' p                  
+                   
+                   let alltogether = zip records paAndRecords
+                                      
+                   return alltogether
+
+getUsers::[Filter User]-> [SelectOpt User]-> Handler [Entity User] 
+getUsers a b = do runDB $ selectList a b                                                  
+
+getAllPayementsWhere::[Entity Payment] -> Handler [((Entity Payment, Entity User, Entity User), (Entity Payment, Entity ReceiptUser))]
+getAllPayementsWhere eP=do records <- runDB $ do
+                                         
+                                         users    <- selectList [] []
+                                         return $ joinTables3 paymentFrom paymentTo eP users users
+
+                 
+                           let payments'=  map (\(x,_,_)-> x ) records
+                           paAndRecords <- runDB $ do  p    <- selectList [] []
+                                                       return $ joinTables paymentReceiptuserline  payments' p                  
+                   
+                           let alltogether = zip records paAndRecords
+                                      
+                           return alltogether                                                        
+                                           

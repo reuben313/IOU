@@ -26,27 +26,23 @@ receiptuserForm rID isEven = renderDivs $ ReceiptUser
 
 
 
-receiptuserForm'' :: UserId-> Form TestAs
-receiptuserForm''  uID = renderDivs $ TestAs
-    <$> areq textField ( FieldSettings  {fsId= Just "myId",fsLabel= "hello"}) Nothing
- 
-                  where         
-                                  users = do
-                                  entities <- runDB (selectList [] [Asc UserIdent])
-                                  optionsPairs $ map (\user -> ( userIdent $ entityVal user
-                                                                  , entityKey user           )) entities
-                        
- 
-    
 
 
-userAForm ::  AForm Handler TestAs
-userAForm        =TestAs
-                <$> ( areq (selectField users) "Model" Nothing)
-                 where         
-                                  users = do
-                                  entities <- runDB (selectList [] [Asc UserIdent])
-                                  optionsPairs $ map (\user -> ( userIdent $ entityVal user
-                                                                  , userIdent $ entityVal user           )) entities
     
-    
+ 
+receiptForm:: UserId-> Form Receipt
+receiptForm uId = renderDivs $ Receipt
+              <$>areq textField "Title" Nothing
+              <*> pure uId
+              <*> lift (liftIO getCurrentTime)
+              <*> areq amountChek (FieldSettings  {fsId= Just "receiptfield",fsLabel= "Total Amount",fsName=Just "f3",fsTooltip=Just "",fsAttrs=[]}) (Just 0.0)
+              <*> areq (selectFieldList options)  (FieldSettings  {fsId= Just "receipType",fsLabel= "Reciept Type",fsName=Just "f4",fsTooltip=Just "",fsAttrs=[("onchange","processAmount()")]}) Nothing
+              
+              
+                where options:: [(Text, Text)]
+                      options = [("even","even"),("not even","not even")]
+                      
+                      errorMessage :: Text
+                      errorMessage = "negative Amount is not permited "
+
+                      amountChek = checkBool (>= 0.0) errorMessage  doubleField    

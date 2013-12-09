@@ -10,26 +10,13 @@ import Handler.HandlerHelpers.PaymentHelper
 
 
 getPaymentsR :: Handler Html
-getPaymentsR = do field <- runDB $ selectList[] [Asc UserId]
-                  sess <-   getSession
-                  userid<- lookupSession "_ID"
-                  records <- runDB $ do
-                                         payments <- selectList [] [Desc PaymentTimestamp]
-                                         users    <- selectList [] []
-                                         return $ joinTables3 paymentFrom paymentTo payments users users
-
-                 
-                  let payments'=  map (\(x,_,_)-> x ) records
-                  paAndRecords <- runDB $ do  p    <- selectList [] []
-                                              return $ joinTables paymentReceiptuserline  payments' p
+getPaymentsR = do yu<- getAllPayements
+                  let alltogether = yu
                   
-                  let alltogether = zip records paAndRecords
-    
-   
                   defaultLayout
                         
                        [whamlet|
-                            $maybe _ <- userid
+                          
                                     
                                    <table border="1">
                                     <tr>
@@ -44,9 +31,10 @@ getPaymentsR = do field <- runDB $ selectList[] [Asc UserId]
                                        <td>#{userIdent (entityVal b)}
                                        <td>#{userIdent (entityVal c)}
                                        <td>#{receiptUserAmount (entityVal e)}  
-                            $nothing
-                                    <p>
-                                        <a href=@{AuthR LoginR}>Go to the login page |]
+                                                                                |] 
+    
+   
+                 
                            
                            
                           

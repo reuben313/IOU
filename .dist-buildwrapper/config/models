@@ -45,6 +45,4 @@ Payment
     receiptuserline ReceiptUserId
     deriving Show
 
-TestAs
- bla Text
 
