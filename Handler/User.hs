@@ -3,7 +3,7 @@ module Handler.User where
 
 import Import
 import Util 
-import Data.Maybe 
+ 
   
 
 
@@ -48,13 +48,14 @@ getUserR userId =do  person         <- runDB $ get404 userId
                      receipts       <- runDB $  selectList [ReceiptRecieptUserId ==. userId] [Desc ReceiptTimestamp]
                      
                      
-                     let filtersReceiptuser= foldl (\x y-> (||.) x [ReceiptUserReceipt_Id==.(entityKey y)]  ) [] receipts
-                     debtorReceipts   <-   runDB $ do  lop  <- selectList filtersReceiptuser []
-                                                       p    <- selectList [] []
-                                                       
-                                                       return $ joinTables receiptUserDebtorId  lop p
+                     let filtersReceiptuser=   foldl (\x y-> (||.) x [ReceiptUserReceipt_Id==.(entityKey y)]  ) [] receipts
+                     debtorReceipts   <- runDB $ do  lop  <- selectList filtersReceiptuser []
+                                                     p    <- selectList [] []
+                                                     return $   joinTables receiptUserDebtorId  lop p
+                                                           
+                                                      
                                                    
-                     creditReceipts <- runDB $  selectList [ReceiptUserDebtorId ==. userId,ReceiptUserStatus==. "unpaid"] []
+                     creditReceipts <- runDB $  selectList [ReceiptUserDebtorId ==. userId] []
                      paymentsDone   <- runDB $ selectList  ((||.)[PaymentFrom==. userId][PaymentTo==. userId])[Desc PaymentTimestamp]
                      let paymentSort = foldl (\ x@(a,b) ey@(Entity _ y)->  if paymentFrom y == userId then if paymentTo y == userId then(a++[ey],b++[ey]) else (a++[ey],b) else (a,b++[ey])   )  ([],[])  paymentsDone 
                      paymentsFrom   <- getAllPayementsWhere $  fst paymentSort
@@ -75,7 +76,7 @@ getUserR userId =do  person         <- runDB $ get404 userId
                                              <table border="1">
                                               <th> Description
                                               <th> Amount 
-                                              <th> View
+                                              <th> View #{show (null  receipts)}
                                               
                                                $forall Entity rId receipt <- receipts
                                                  <tr>
@@ -89,7 +90,8 @@ getUserR userId =do  person         <- runDB $ get404 userId
                                           <p> Creditors
                                             <table border="1">
                                              <th> Description
-                                             <th> Amount 
+                                             <th> Amount
+                                             <th> Status 
                                              <th> Action
                                               
                                                $forall Entity ruId receiptuser <- creditReceipts
@@ -97,6 +99,7 @@ getUserR userId =do  person         <- runDB $ get404 userId
                                                   <td> #{ receiptUserReceipt_userIdent receiptuser} 
                                                   <td> #{ receiptUserAmount receiptuser}
                                                   <td> #{ receiptUserStatus receiptuser}
+                                                 
                                                   <td> 
                                                        $if chek''' receiptuser
                                                          <a href=@{PayPaymentsR ruId}>pay my bill              
@@ -116,16 +119,18 @@ getUserR userId =do  person         <- runDB $ get404 userId
                                              <th>Status
                                              <th> View Reciept
                                              
-                                              
-                                               $forall (Entity rId receiptU,Entity uId user) <- debtorReceipts
-                                                 <tr>
-                                                  <td>#{receiptUserReceipt_userIdent receiptU }
-                                                  <td>#{userIdent user }
-                                                  <td>#{receiptUserAmount receiptU}
-                                                  <td>#{receiptUserStatus receiptU}
-                                                  <td><a href=@{ReceiptR (receiptUserReceipt_Id receiptU)}> View 
+                                                    $if (null  receipts)
+                                                       
                                                   
-                                                  
+                                                    $else
+                                                       $forall (Entity rId receiptU,Entity uId user) <- debtorReceipts
+                                                                         <tr>
+                                                                          <td>#{receiptUserReceipt_userIdent receiptU }
+                                                                          <td>#{userIdent user }
+                                                                          <td>#{receiptUserAmount receiptU}
+                                                                          <td>#{receiptUserStatus receiptU}
+                                                                          <td><a href=@{ReceiptR (receiptUserReceipt_Id receiptU)}> View 
+                                    
                                             
                                          
                                           <p> payment from
@@ -138,7 +143,7 @@ getUserR userId =do  person         <- runDB $ get404 userId
                                              
                                               
                                                
-                                                 $forall ((a,b,c),(d,e))  <-   paymentsFrom                               
+                                                 $forall ((a,b,c),(d,e))  <-  paymentsTo                                 
                                                        <tr>
                                                        <td>#{paymentPaymentIdent (entityVal a)}
                                                        <td>#{userIdent (entityVal b)}
@@ -157,7 +162,7 @@ getUserR userId =do  person         <- runDB $ get404 userId
                                              
                                               
                                                
-                                                 $forall ((a,b,c),(d,e))  <-   paymentsTo                               
+                                                 $forall ((a,b,c),(d,e))  <- paymentsFrom                                
                                                        <tr>
                                                        <td>#{paymentPaymentIdent (entityVal a)}
                                                        <td>#{userIdent (entityVal b)}

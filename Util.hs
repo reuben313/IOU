@@ -4,10 +4,10 @@ module Util where
 
 import Import
 import Prelude
-import Data.Maybe
+
 import Data.Text.Internal
 
---convert Text to Int value
+
 getUserId ::  Maybe Text -> Maybe Int
 getUserId mT  =  case mT of
                     Just x -> Just (read  (showText x))
@@ -31,7 +31,7 @@ isPartOfReciept em (Just t) = length list > 0
 
 toString:: PersistValue->String  
 toString (PersistText  t)= show t    
-toString (PersistInt64 t')= "\""++(show t')++ "\""   
+toString (PersistInt64 t')= "\""++show t'++ "\""   
 
 
 

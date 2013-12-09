@@ -115,7 +115,7 @@ getReceiptR receiptId = do  userId<-  lookupSession "_ID"
                                                                                                         "not even" -> False
                                                     _                 -> False
                             debtors <- runDB $ selectList [ReceiptUserReceipt_Id ==. receiptId ] []
-                            userInfo<- runDB $ selectFirst[UserId==.   (Key{unKey=userKey})] []
+                            userInfo<- runDB $ selectFirst[UserId==.  (receiptRecieptUserId $ entityVal $ fromJust vb)] []
                             let userInfo' = userIdent $ entityVal $ fromJust userInfo 
                             (widget, enctype) <- generateFormPost (receiptuserForm receiptId  isEven )
                             let x= vb

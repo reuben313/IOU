@@ -75,12 +75,12 @@ getPayPaymentsR id  = do  userid<- lookupSession "_ID"
                                               Just (Entity x y) -> do let isval =  entityVal $ fromJust userReceipt
                                                                       let uR =receiptUserReceipt_Id $  entityVal $ fromJust userReceipt
                                                                       receipt <-    runDB $ selectFirst [ReceiptId ==. uR] [] 
-                                                                      let rec = receiptRecieptUserId $  entityVal $ fromJust receipt
-                                                                      let debtorId=receiptUserDebtorId $  entityVal $ fromJust userReceipt
+                                                                     
+                                                                      let debtorId=receiptRecieptUserId $  entityVal $ fromJust receipt
                                                                       let bla = case ( unpack (toLower $ receiptUserStatus isval) ) of "unpaid" -> Nothing
                                                                                                                                        "paid"  ->  Just True
                                                                           
-                                                                      (res, enctypee)  <- generateFormPost  (form' rec debtorId id) 
+                                                                      (res, enctypee)  <- generateFormPost  (form' userKey' debtorId  id) 
                                                                       defaultLayout
                                                                         [whamlet|
                                                                                    
@@ -109,14 +109,14 @@ getPayPaymentsR id  = do  userid<- lookupSession "_ID"
 postPayPaymentsR :: ReceiptUserId -> Handler Html 
 postPayPaymentsR id=do       userid <- lookupSession "_ID"
                              let   userKey = convertToTextKey' userid
-               
+                             let userKey' =   Key{unKey = userKey}
                              userReceipt<- runDB $ selectFirst [ReceiptUserId ==. id] []
                              let uR =receiptUserReceipt_Id $  entityVal $ fromJust userReceipt
                              receipt <-    runDB $ selectFirst [ReceiptId ==. uR] [] 
-                             let rec = receiptRecieptUserId $  entityVal $ fromJust receipt
-                             let debtorId=receiptUserDebtorId $  entityVal $ fromJust userReceipt
-                             let receiptide =  receiptUserReceipt_Id $  entityVal $ fromJust userReceipt
-                             ((res, widget), enctypee) <- runFormPost  (form' rec debtorId id ) 
+                             
+                             let debtorId=receiptRecieptUserId $  entityVal $ fromJust receipt
+                            
+                             ((res, widget), enctypee) <- runFormPost  (form' userKey' debtorId id ) 
                              case res of FormSuccess a -> do runDB $ insert a
                                                              runDB $ update id [ReceiptUserStatus=."paid"]
                                                              redirect HomeR

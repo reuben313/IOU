@@ -21,6 +21,6 @@ getHomeR = defaultLayout $ do
                             [whamlet|
                                 <p>Welcome!
                               
-                                       
+                                        
                                           
                             |]
